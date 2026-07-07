@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sync2meet-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sync2meet
+      POSTGRES_PASSWORD: sync2meet
+      POSTGRES_DB: sync2meet
+    ports:
+      - "5432:5432"
+    volumes:
+      - sync2meet_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sync2meet"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sync2meet_pgdata:

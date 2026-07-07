@@ -1,0 +1,45 @@
+Sync2meet — Deploy em servidor externo (VPS, até ~30 contas)
+=============================================================
+
+OPÇÃO A — Docker (recomendado)
+------------------------------
+1. Copiar o projeto para o servidor (ex. /opt/sync2meet)
+2. cd deploy
+3. cp env.production.example .env
+4. Editar .env:
+   - APP_ENV=production
+   - APP_PUBLIC_URL=https://teu-dominio.pt
+   - CORS_ORIGINS=https://teu-dominio.pt
+   - AUTH_SECRET=(string aleatória longa)
+   - TEAM_USERS=Nome:email:password,...
+   - OPENAI_API_KEY, SMTP_*, etc.
+5. docker compose up -d --build
+6. Apontar DNS do domínio para o IP do servidor
+7. HTTPS: usar Caddy/Traefik à frente ou certbot no host
+
+OPÇÃO B — Systemd + Nginx (sem Docker)
+--------------------------------------
+1. Ubuntu 22.04+, mínimo 2 GB RAM, 20 GB disco
+2. Copiar projeto para /opt/sync2meet
+3. cp deploy/env.production.example backend/.env e editar
+4. DOMAIN=sync2meet.empresa.pt bash deploy/install-server.sh
+5. sudo certbot --nginx -d sync2meet.empresa.pt
+
+Utilizadores da equipa
+----------------------
+Cada pessoa cria a sua conta em https://teu-dominio.pt/register
+O primeiro registo torna-se administrador (vê todas as reuniões).
+Limite: MAX_TEAM_USERS=30 no .env
+
+Para fechar registo depois da equipa estar completa:
+  ALLOW_REGISTRATION=false
+
+Reiniciar após alterar .env:
+  Docker:  docker compose restart
+  Systemd: sudo systemctl restart sync2meet-api sync2meet-web
+
+Requisitos servidor
+-------------------
+- Python 3.11+, Node 22, ffmpeg
+- Portas 80/443 abertas
+- SQLite + ficheiros em /var/lib/sync2meet (backup regular)

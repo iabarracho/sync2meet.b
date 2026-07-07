@@ -1,0 +1,63 @@
+# --- Secrets (never commit) ---
+.env
+.env.local
+.env.production
+!.env.example
+!**/.env.example
+!**/env.example
+!**/env.production.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Local data ---
+sync2meet.db
+sync2meet.db-*
+backend/sync2meet.db
+backend/sync2meet.db-*
+backend/*.db
+backend/*.db-journal
+backend/*.db-wal
+backend/*.db-shm
+backend/storage/*
+!backend/storage/.gitkeep
+
+# --- Logs & temp ---
+*.log
+*.tmp
+*.temp
+.cache/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+.cursor/
+
+# --- Build / coverage ---
+htmlcov/
+.coverage
+coverage/

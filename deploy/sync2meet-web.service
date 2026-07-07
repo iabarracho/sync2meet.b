@@ -1,0 +1,18 @@
+[Unit]
+Description=Sync2meet Frontend (Next.js)
+After=network.target sync2meet-api.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sync2meet/frontend
+Environment=NODE_ENV=production
+Environment=INTERNAL_API_URL=http://127.0.0.1:8000
+Environment=NEXT_PUBLIC_AUTH_ENABLED=true
+ExecStart=/usr/bin/npm run start -- -H 127.0.0.1 -p 3000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

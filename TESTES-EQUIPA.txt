@@ -1,0 +1,43 @@
+Sync2meet — Guia de testes para a equipa
+========================================
+
+QUEM ARRANCA (1 pessoa no PC servidor)
+  1. Duplo-clique em ARRANCAR-REDE.cmd
+  2. Manter as 2 janelas abertas (Backend + Frontend)
+  3. Partilhar o link que aparece: http://TEU-IP:3000
+     (todos na mesma WiFi/rede da empresa)
+
+QUEM TESTA (resto da equipa)
+  Abrir o link no browser — Chrome ou Edge recomendado.
+
+O QUE TESTAR (por ordem)
+  1. Criar reunião (cliente, título, data, participantes com email)
+  2. Gerar agenda (escolher template → Gerar)
+  3. Carregar ficheiro:
+       - Gravação: MP4, WEBM, MP3…  OU
+       - Transcrição: VTT, TXT, DOCX (Google Meet)
+  4. Transcrever (só se for gravação áudio/vídeo)
+  5. Gerar ata — rever texto, action items, resumo
+  6. Editar rascunho se necessário
+  7. Aprovar ata
+  8. Exportar PDF / Word
+
+O QUE NÃO TESTAR AINDA
+  - Enviar email (falta SMTP no servidor)
+  - Enviar Slack (falta bot token no servidor)
+  Estes passos dão erro — é esperado.
+
+O QUE REGISTAR / REPORTAR
+  Para cada teste, anotar:
+  - O que fizeste (passo a passo)
+  - O que correu bem
+  - O que falhou ou confundiu (com print se possível)
+  - Qualidade da agenda/ata: secções certas? action items úteis?
+
+DICAS
+  - Uma reunião de teste por pessoa ou em pares evita confusão
+  - Ficheiros pequenos (< 25 MB) transcrevem mais depressa
+  - Se a página não abre: confirmar mesma rede WiFi e firewall do PC servidor
+
+PARAR
+  No PC servidor: parar-tudo.cmd

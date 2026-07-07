@@ -1,0 +1,17 @@
+[Unit]
+Description=Sync2meet API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sync2meet/backend
+EnvironmentFile=/opt/sync2meet/backend/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/sync2meet/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
