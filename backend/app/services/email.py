@@ -17,22 +17,39 @@ def smtp_from_address() -> str:
     return addr or settings.smtp_user or ""
 
 
+def _smtp_restart_hint() -> str:
+    if settings.is_production:
+        return (
+            "No servidor: edita deploy/.env (SMTP_PASSWORD) e corre "
+            "`cd /opt/sync2meet/deploy && docker compose up -d`."
+        )
+    return "Atualiza SMTP_PASSWORD em backend/.env e reinicia com parar-tudo.cmd + ARRANCAR.cmd."
+
+
 def friendly_smtp_error(error: str | None) -> str:
     msg = (error or "").strip()
     if not msg:
         return "Não foi possível enviar o email."
     lower = msg.lower()
+    host = (settings.smtp_host or "").lower()
+    account = settings.smtp_user or "conta SMTP"
     if "535" in msg or "badcredentials" in lower or "username and password not accepted" in lower:
-        account = settings.smtp_user or "conta SMTP"
+        if "gmail" in host or "google" in host:
+            return (
+                f"Gmail rejeitou o login para {account}. "
+                "A App Password tem de ser criada nessa mesma conta Google "
+                "(myaccount.google.com/apppasswords), não noutra. "
+                f"Gera uma nova e atualiza SMTP_PASSWORD. {_smtp_restart_hint()}"
+            )
         return (
-            f"Gmail rejeitou o login para {account}. "
-            "A App Password tem de ser criada nessa mesma conta Google "
-            "(myaccount.google.com/apppasswords), não noutra. "
-            "Se já criaste, gera uma nova App Password e atualiza SMTP_PASSWORD no backend/.env; "
-            "depois reinicia com parar-tudo.cmd e ARRANCAR.cmd."
+            f"O servidor de email rejeitou o login para {account}. "
+            f"Verifica SMTP_USER e SMTP_PASSWORD. {_smtp_restart_hint()}"
         )
     if "authentication failed" in lower:
-        return "Falha de autenticação SMTP. Verifica SMTP_USER e SMTP_PASSWORD no backend/.env."
+        return (
+            f"Falha de autenticação SMTP ({account}). "
+            f"Verifica SMTP_USER e SMTP_PASSWORD. {_smtp_restart_hint()}"
+        )
     return msg
 
 

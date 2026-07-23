@@ -352,10 +352,15 @@ def forgot_password(
             "Recuperação por email não está configurada. Contacta o administrador.",
         )
 
-    sent, error = password_reset_service.request_password_reset(
+    status, error = password_reset_service.request_password_reset(
         db, body.email.lower().strip()
     )
-    if not sent:
+    if status == "not_found":
+        raise HTTPException(
+            404,
+            "Essa conta não existe. Cria uma conta nova para continuares.",
+        )
+    if status == "failed":
         raise HTTPException(503, error or "Não foi possível enviar o email.")
 
     audit_service.log_audit(
@@ -365,8 +370,8 @@ def forgot_password(
     )
     return MessageOut(
         message=(
-            "Se existir uma conta com esse email, receberás instruções "
-            "para redefinir a password."
+            "Enviámos um link para o teu email. "
+            "Abre-o para definires uma nova password."
         )
     )
 

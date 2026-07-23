@@ -26,11 +26,19 @@ def build_reset_link(token: str) -> str:
     return f"{_reset_base_url()}/reset-password?token={token}"
 
 
-def request_password_reset(db: Session, email: str) -> tuple[bool, str | None]:
-    """Create token and send email. Returns (sent, error)."""
+def request_password_reset(
+    db: Session, email: str
+) -> tuple[str, str | None]:
+    """Create token and send email.
+
+    Returns (status, error) where status is:
+    - sent
+    - not_found
+    - failed
+    """
     user = db.query(User).filter(User.email == email.lower().strip()).first()
     if not user or not user.password_hash:
-        return True, None
+        return "not_found", None
 
     db.query(PasswordResetToken).filter(
         PasswordResetToken.user_id == user.id,
@@ -58,8 +66,8 @@ def request_password_reset(db: Session, email: str) -> tuple[bool, str | None]:
         expires_hours=settings.password_reset_hours,
     )
     if status != "sent":
-        return False, error
-    return True, None
+        return "failed", error
+    return "sent", None
 
 
 def reset_password_with_token(

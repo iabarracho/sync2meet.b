@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,7 +10,6 @@ import {
   LayoutDashboard,
   Layers,
   LogOut,
-  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APP_NAME, APP_TAGLINE } from "@/lib/branding";
@@ -49,13 +49,17 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-slate-950 text-white">
-      <div className="flex items-center gap-2 border-b border-slate-800 px-6 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600">
-          <Video className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="font-semibold tracking-tight">{APP_NAME}</p>
-          <p className="text-xs text-slate-400">{APP_TAGLINE}</p>
+      <div className="flex items-center gap-3 border-b border-slate-800 px-5 py-5">
+        <Image
+          src="/logo-bocaboca.png"
+          alt="BocàBoca"
+          width={36}
+          height={36}
+          className="rounded-lg"
+        />
+        <div className="min-w-0">
+          <p className="truncate font-semibold tracking-tight">{APP_NAME}</p>
+          <p className="truncate text-xs text-slate-400">{APP_TAGLINE}</p>
         </div>
       </div>
       <nav className="flex-1 space-y-1 p-4">
