@@ -368,6 +368,8 @@ export const api = {
           max_team_users: number;
           allowed_email_domains?: string[];
           password_reset_enabled?: boolean;
+          slack_enabled?: boolean;
+          slack_default_channel?: string;
         }>("/api/auth/config"),
       register: async (name: string, email: string, password: string) => {
         const result = await request<{
@@ -598,10 +600,13 @@ export const api = {
         `/api/meetings/${id}/slack/preview`
       ),
     slackSend: (id: string) =>
-      request<unknown>(`/api/meetings/${id}/slack/send`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      }),
+      request<{ id: string; channel: string; status: string; error?: string | null }>(
+        `/api/meetings/${id}/slack/send`,
+        {
+          method: "POST",
+          body: JSON.stringify({}),
+        }
+      ),
     actionItems: (id: string) =>
       request<ActionItem[]>(`/api/meetings/${id}/action-items`),
     addParticipant: (id: string, body: unknown) =>

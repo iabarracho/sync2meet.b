@@ -37,6 +37,25 @@ async def send_slack_message(channel: str, message: str) -> tuple[str, str | Non
             data = resp.json()
         if data.get("ok"):
             return "sent", None
-        return "failed", data.get("error", "unknown_error")
+        return "failed", _friendly_slack_error(data.get("error", "unknown_error"), channel)
     except Exception as exc:  # noqa: BLE001
         return "failed", str(exc)
+
+
+def _friendly_slack_error(code: str, channel: str) -> str:
+    mapping = {
+        "invalid_auth": "Token Slack inválido. Verifica SLACK_BOT_TOKEN no servidor.",
+        "not_authed": "Token Slack em falta ou inválido.",
+        "channel_not_found": (
+            f"Canal «{channel}» não encontrado. "
+            "Confirma SLACK_DEFAULT_CHANNEL e convida o bot para esse canal."
+        ),
+        "not_in_channel": (
+            f"O bot Slack não está no canal «{channel}». "
+            "No Slack: abre o canal → Integrar apps → adiciona o bot."
+        ),
+        "is_archived": f"O canal «{channel}» está arquivado.",
+        "msg_too_long": "A mensagem Slack é demasiado longa.",
+        "rate_limited": "Slack limitou pedidos. Tenta daqui a um minuto.",
+    }
+    return mapping.get(code, f"Erro Slack: {code}")

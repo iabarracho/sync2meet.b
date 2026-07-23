@@ -1366,6 +1366,8 @@ async def send_slack(
     db.add(log)
     db.commit()
     db.refresh(log)
+    if status != "sent":
+        raise HTTPException(502, error or "Falha ao enviar para o Slack.")
     return log
 
 

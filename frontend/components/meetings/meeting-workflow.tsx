@@ -86,6 +86,8 @@ export function MeetingWorkflow({
     initialMinutes?.id ?? null
   );
   const [slackPreview, setSlackPreview] = useState<string | null>(null);
+  const [slackEnabled, setSlackEnabled] = useState(false);
+  const [slackChannel, setSlackChannel] = useState("#general");
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -179,6 +181,18 @@ export function MeetingWorkflow({
   useEffect(() => {
     if (initialTemplates === undefined) void loadTemplates();
   }, [initialTemplates, loadTemplates]);
+
+  useEffect(() => {
+    api.auth
+      .config()
+      .then((cfg) => {
+        setSlackEnabled(Boolean(cfg.slack_enabled));
+        if (cfg.slack_default_channel) {
+          setSlackChannel(cfg.slack_default_channel);
+        }
+      })
+      .catch(() => setSlackEnabled(false));
+  }, []);
 
   useEffect(() => {
     setStatus(initialStatus);
@@ -821,10 +835,19 @@ export function MeetingWorkflow({
           </Button>
           <Button
             variant="outline"
+            disabled={!!loading || !slackEnabled}
+            title={
+              slackEnabled
+                ? undefined
+                : "Slack não configurado no servidor (SLACK_BOT_TOKEN)."
+            }
             onClick={() =>
               run("slack-preview", async () => {
                 const p = await api.meetings.slackPreview(meetingId);
                 setSlackPreview(p.message);
+                setSuccessMessage(
+                  `Pré-visualização Slack pronta (canal ${p.channel}).`
+                );
               })
             }
           >
@@ -833,15 +856,40 @@ export function MeetingWorkflow({
           </Button>
           <Button
             variant="outline"
+            disabled={!!loading || !slackEnabled}
+            title={
+              slackEnabled
+                ? undefined
+                : "Slack não configurado no servidor (SLACK_BOT_TOKEN)."
+            }
             onClick={() =>
               run("slack-send", async () => {
-                await api.meetings.slackSend(meetingId);
+                const log = await api.meetings.slackSend(meetingId);
+                const channel =
+                  log &&
+                  typeof log === "object" &&
+                  "channel" in log &&
+                  typeof (log as { channel?: string }).channel === "string"
+                    ? (log as { channel: string }).channel
+                    : slackChannel;
+                setSuccessMessage(`Enviado para o Slack (${channel}).`);
               })
             }
           >
             Enviar para Slack
           </Button>
           </div>
+          {!slackEnabled ? (
+            <p className="text-xs text-amber-700">
+              Slack desactivado: falta <code>SLACK_BOT_TOKEN</code> no servidor
+              (e o bot tem de estar no canal {slackChannel}).
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Slack envia para {slackChannel}. O bot tem de estar convidado
+              nesse canal.
+            </p>
+          )}
         </CardContent>
         {slackPreview && (
           <CardContent className="pt-0">

@@ -298,6 +298,7 @@ class SlackLogOut(ORMModel):
     message: str
     status: str
     provider: str
+    error: str | None = None
     created_at: datetime
 
 
@@ -349,6 +350,8 @@ class AuthConfigOut(BaseModel):
     users_count: int | None = None
     allowed_email_domains: list[str] = []
     password_reset_enabled: bool = False
+    slack_enabled: bool = False
+    slack_default_channel: str = "#general"
 
 
 class ForgotPasswordRequest(BaseModel):

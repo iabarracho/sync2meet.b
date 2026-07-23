@@ -100,9 +100,9 @@ def auth_config(db: Session = Depends(get_db)) -> AuthConfigOut:
         users_count=None,
 
         allowed_email_domains=settings.allowed_email_domains_list,
-
         password_reset_enabled=settings.email_enabled,
-
+        slack_enabled=settings.slack_enabled,
+        slack_default_channel=settings.slack_default_channel,
     )
 
 
