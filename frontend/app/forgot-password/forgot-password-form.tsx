@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [missingAccount, setMissingAccount] = useState(false);
   const [loading, setLoading] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
 
@@ -26,12 +27,20 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setMissingAccount(false);
     setLoading(true);
     try {
       const result = await api.auth.forgotPassword(email.trim());
       setSuccess(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no pedido");
+      const message =
+        err instanceof Error ? err.message : "Falha no pedido";
+      const isMissing =
+        (err instanceof ApiError && err.status === 400) ||
+        message.toLowerCase().includes("não existe") ||
+        message.toLowerCase().includes("nao existe");
+      setMissingAccount(isMissing);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -40,7 +49,7 @@ export default function ForgotPasswordForm() {
   return (
     <AuthShell
       title="Esqueci-me da password"
-      subtitle="Indica o email da tua conta. Se existir, enviamos um link para definires uma nova password."
+      subtitle="Escreve o email com que te registaste. Se a conta existir, enviamos o link para esse email."
     >
       {available === false ? (
         <p className="text-sm text-amber-800">
@@ -63,8 +72,7 @@ export default function ForgotPasswordForm() {
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               <p>{error}</p>
-              {error.toLowerCase().includes("não existe") ||
-              error.toLowerCase().includes("nao existe") ? (
+              {missingAccount ? (
                 <p className="mt-2">
                   <Link
                     href="/register"
@@ -86,7 +94,7 @@ export default function ForgotPasswordForm() {
             className="w-full"
             disabled={loading || available === null}
           >
-            {loading ? "A enviar…" : "Enviar link"}
+            {loading ? "A verificar…" : "Enviar link"}
           </Button>
         </form>
       )}

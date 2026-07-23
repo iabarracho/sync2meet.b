@@ -356,12 +356,17 @@ def forgot_password(
         db, body.email.lower().strip()
     )
     if status == "not_found":
+        # 400 (não 404) — evita proxies a engolir o corpo da resposta
         raise HTTPException(
-            404,
+            400,
             "Essa conta não existe. Cria uma conta nova para continuares.",
         )
     if status == "failed":
-        raise HTTPException(503, error or "Não foi possível enviar o email.")
+        detail = error or "Não foi possível enviar o email."
+        raise HTTPException(
+            503,
+            f"A conta existe, mas o envio do email falhou. {detail}",
+        )
 
     audit_service.log_audit(
         db,
@@ -370,8 +375,8 @@ def forgot_password(
     )
     return MessageOut(
         message=(
-            "Enviámos um link para o teu email. "
-            "Abre-o para definires uma nova password."
+            f"Enviámos um link para {body.email.lower().strip()}. "
+            "Abre o email e define uma nova password."
         )
     )
 
