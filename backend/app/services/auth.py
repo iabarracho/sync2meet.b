@@ -73,7 +73,7 @@ def email_domain_allowed(email: str, *, role: str | None = None) -> bool:
         return True
     domains = settings.allowed_email_domains_list
     if not domains:
-        return settings.is_production is False
+        return True
     parts = email.lower().strip().rsplit("@", 1)
     if len(parts) != 2 or not parts[0]:
         return False

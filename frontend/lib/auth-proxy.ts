@@ -27,10 +27,8 @@ function cookieSecure(): boolean {
     process.env.APP_PUBLIC_URL ||
     process.env.NEXT_PUBLIC_APP_PUBLIC_URL ||
     "";
-  if (publicUrl.startsWith("https://")) {
-    return true;
-  }
-  return process.env.NODE_ENV === "production";
+  // Só Secure em HTTPS — evita cookies invisíveis em http://127.0.0.1
+  return publicUrl.startsWith("https://");
 }
 
 function cookieOptions() {
@@ -43,7 +41,23 @@ function cookieOptions() {
   };
 }
 
-/** Extrai sync2meet_token do header Set-Cookie do backend (não expor token no JSON). */
+/** Extrai sync2meet_token dos headers Set-Cookie do backend. */
+function tokenFromResponseHeaders(headers: Headers): string | null {
+  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] })
+    .getSetCookie;
+  if (typeof getSetCookie === "function") {
+    for (const cookie of getSetCookie.call(headers)) {
+      const token = tokenFromSetCookie(cookie);
+      if (token) return token;
+    }
+  }
+  return (
+    tokenFromSetCookie(headers.get("set-cookie")) ??
+    tokenFromSetCookie(headers.get("Set-Cookie"))
+  );
+}
+
+/** Extrai sync2meet_token de um header Set-Cookie individual. */
 function tokenFromSetCookie(setCookie: string | null): string | null {
   if (!setCookie) return null;
   const match = setCookie.match(/sync2meet_token=([^;]+)/);
@@ -88,9 +102,7 @@ export async function proxyAuthPost(
     return response;
   }
 
-  const token =
-    tokenFromSetCookie(backendRes.headers.get("set-cookie")) ??
-    tokenFromSetCookie(backendRes.headers.get("Set-Cookie"));
+  const token = tokenFromResponseHeaders(backendRes.headers);
 
   if (backendRes.ok && token) {
     response.cookies.set(AUTH_COOKIE, token, cookieOptions());

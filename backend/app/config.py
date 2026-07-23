@@ -75,8 +75,10 @@ class Settings(BaseSettings):
     auth_enabled: bool = True
     auth_secret: str = "change-me-in-production"
     auth_token_hours: int = 24
+    password_reset_hours: int = 1
     allow_registration: bool = True
-    max_team_users: int = 30
+    # 0 = sem limite de contas
+    max_team_users: int = 0
     # Só em dev local: auto-login como primeiro user quando AUTH_ENABLED=false
     dev_auth_bypass: bool = False
     # Confiar em X-Forwarded-For (só atrás de nginx/proxy de confiança)
@@ -86,8 +88,10 @@ class Settings(BaseSettings):
     meeting_retention_days: int = 15
     # Opcional: bootstrap inicial name:email:password (não necessário com registo aberto)
     team_users: str = ""
-    # Registo/login: só emails destes domínios (ex. bocaboca.pt). Admin isento.
-    allowed_email_domains: str = "bocaboca.pt"
+    # Registo/login: domínios permitidos (ex. bocaboca.pt,gmail.com). Vazio = qualquer email.
+    allowed_email_domains: str = ""
+    # Emails promovidos a admin no arranque (separados por vírgula)
+    admin_emails: str = ""
 
     @field_validator("smtp_user", "smtp_password", mode="before")
     @classmethod
@@ -179,6 +183,14 @@ class Settings(BaseSettings):
             if d.strip()
         ]
 
+    @property
+    def admin_emails_list(self) -> list[str]:
+        return [
+            e.strip().lower()
+            for e in self.admin_emails.split(",")
+            if e.strip()
+        ]
+
 
     @property
     def allowed_upload_extensions_list(self) -> list[str]:
@@ -216,10 +228,6 @@ def validate_production_settings() -> None:
     if settings.auth_enabled and not settings.team_users.strip() and not settings.allow_registration:
         raise RuntimeError(
             "Em produção: ativa ALLOW_REGISTRATION=true ou define TEAM_USERS no .env."
-        )
-    if settings.auth_enabled and not settings.allowed_email_domains_list:
-        raise RuntimeError(
-            "ALLOWED_EMAIL_DOMAINS não pode estar vazio em produção."
         )
 
 

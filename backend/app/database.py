@@ -124,6 +124,35 @@ def _migrate_schema() -> None:
                 )
                 logger.info("Added users.token_version column")
 
+        if "password_reset_tokens" not in tables:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE password_reset_tokens (
+                        id VARCHAR NOT NULL PRIMARY KEY,
+                        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        token_hash VARCHAR NOT NULL,
+                        expires_at DATETIME NOT NULL,
+                        used_at DATETIME,
+                        created_at DATETIME NOT NULL
+                    )
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_password_reset_tokens_user_id "
+                    "ON password_reset_tokens (user_id)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_password_reset_tokens_token_hash "
+                    "ON password_reset_tokens (token_hash)"
+                )
+            )
+            logger.info("Created password_reset_tokens table")
+
         if "audit_events" not in tables:
             conn.execute(
                 text(

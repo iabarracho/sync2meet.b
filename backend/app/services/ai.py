@@ -142,9 +142,9 @@ def _cleanup_filled_document(content: str) -> str:
             continue
         if re.fullmatch(r"\[[^\]]+\]", line):
             continue
-        if line in {"XX", "• XX", "•", "-", "—"}:
+        if line in {"XX", "• XX", "- XX", "•", "-", "—"}:
             continue
-        if re.fullmatch(r"[•\-–]\s*XX(\s*[—–-].*)?", line):
+        if re.fullmatch(r"[•\-–*—]\s*XX(\s*[—–-].*)?", line):
             continue
         if line.startswith("|") and line.endswith("|"):
             cells = [c.strip() for c in line.strip("|").split("|")]
@@ -193,8 +193,11 @@ async def fill_template(
         "3) Se não houver action items, remove a tabela e o título dessa secção. "
         "4) O documento final deve ficar limpo, sem formatação vazia nem estrutura órfã. "
         "5) Mantém o estilo profissional do template nas partes que ficam. "
+        "6) PRESERVA a marcação Markdown do template: # ## ### títulos, **negrito**, "
+        "*itálico*, listas com '- ' ou '1. ', e tabelas com '|'. "
+        "Não convertas títulos Markdown em texto em MAIÚSCULAS sem '#'. "
         "Usa APENAS informação business-relevante do analysis. "
-        "Devolve apenas o documento final em português europeu."
+        "Devolve apenas o documento final em português europeu (Markdown)."
     )
     response = client.chat.completions.create(
         model=settings.openai_chat_model,
@@ -247,6 +250,47 @@ def extract_template_text(file_path: Path, source: str) -> str:
     return _extract_text(file_path, source)
 
 
+def _paragraph_to_markdown(paragraph) -> str:
+    """Convert a Word paragraph to Markdown (headings, lists, bold/italic)."""
+    text_parts: list[str] = []
+    for run in paragraph.runs:
+        chunk = run.text or ""
+        if not chunk:
+            continue
+        if run.bold and run.italic:
+            chunk = f"***{chunk}***"
+        elif run.bold:
+            chunk = f"**{chunk}**"
+        elif run.italic:
+            chunk = f"*{chunk}*"
+        text_parts.append(chunk)
+    text = "".join(text_parts).strip() or paragraph.text.strip()
+    if not text:
+        return ""
+
+    style = (paragraph.style.name or "").lower() if paragraph.style else ""
+    if "heading 1" in style or style == "title":
+        return f"# {text}"
+    if "heading 2" in style:
+        return f"## {text}"
+    if "heading 3" in style:
+        return f"### {text}"
+    if "list number" in style or "numbered" in style:
+        return f"1. {text}"
+    if "list" in style or "bullet" in style:
+        return f"- {text}"
+
+    # Numbering via Word list XML
+    try:
+        num_pr = paragraph._p.pPr.numPr  # type: ignore[attr-defined]
+    except Exception:
+        num_pr = None
+    if num_pr is not None:
+        return f"- {text}"
+
+    return text
+
+
 def _extract_docx_text(file_path: Path) -> str:
     from docx import Document
     from docx.table import Table
@@ -258,9 +302,9 @@ def _extract_docx_text(file_path: Path) -> str:
     for element in doc.element.body:
         tag = element.tag.split("}")[-1] if "}" in element.tag else element.tag
         if tag == "p":
-            text = Paragraph(element, doc).text.strip()
-            if text:
-                lines.append(text)
+            md = _paragraph_to_markdown(Paragraph(element, doc))
+            if md:
+                lines.append(md)
         elif tag == "tbl":
             table = Table(element, doc)
             for row in table.rows:

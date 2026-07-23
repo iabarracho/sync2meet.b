@@ -19,12 +19,19 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [emailDomains, setEmailDomains] = useState<string[]>([]);
+  const [passwordResetEnabled, setPasswordResetEnabled] = useState(false);
 
   useEffect(() => {
     api.auth
       .config()
-      .then((cfg) => setEmailDomains(cfg.allowed_email_domains ?? []))
-      .catch(() => setEmailDomains([]));
+      .then((cfg) => {
+        setEmailDomains(cfg.allowed_email_domains ?? []);
+        setPasswordResetEnabled(cfg.password_reset_enabled ?? false);
+      })
+      .catch(() => {
+        setEmailDomains([]);
+        setPasswordResetEnabled(false);
+      });
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -70,7 +77,17 @@ export default function LoginForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {passwordResetEnabled ? (
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-brand-600 hover:underline"
+                  >
+                    Esqueci a password
+                  </Link>
+                ) : null}
+              </div>
               <Input
                 id="password"
                 type="password"

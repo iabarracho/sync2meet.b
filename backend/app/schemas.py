@@ -348,6 +348,20 @@ class AuthConfigOut(BaseModel):
     max_team_users: int
     users_count: int | None = None
     allowed_email_domains: list[str] = []
+    password_reset_enabled: bool = False
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=10, max_length=256)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class MessageOut(BaseModel):
+    message: str
 
 
 class UserOut(ORMModel):

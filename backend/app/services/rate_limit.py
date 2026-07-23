@@ -19,6 +19,7 @@ TRANSCRIBE_LIMIT = (15, 3600)
 _LIMITS: dict[str, tuple[int, int]] = {
     "login": AUTH_LIMIT,
     "register": AUTH_LIMIT,
+    "password_reset": (5, 900),
     "upload": UPLOAD_LIMIT,
     "transcribe": TRANSCRIBE_LIMIT,
 }

@@ -24,6 +24,13 @@ def _parse_team_users(raw: str) -> list[tuple[str, str, str, str]]:
     return entries
 
 
+def promote_admin_emails(db: Session) -> None:
+    for email in settings.admin_emails_list:
+        user = db.query(User).filter(User.email == email).first()
+        if user and user.role != "admin":
+            user.role = "admin"
+
+
 def backfill_meeting_owners(db: Session) -> None:
     admin = (
         db.query(User)
@@ -86,6 +93,7 @@ def seed_database(db: Session) -> None:
                     is_default=spec["is_default"],
                 )
             )
+    promote_admin_emails(db)
     db.commit()
     cleanup_duplicate_templates(db)
     backfill_meeting_owners(db)

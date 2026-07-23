@@ -367,6 +367,7 @@ export const api = {
           allow_registration: boolean;
           max_team_users: number;
           allowed_email_domains?: string[];
+          password_reset_enabled?: boolean;
         }>("/api/auth/config"),
       register: async (name: string, email: string, password: string) => {
         const result = await request<{
@@ -383,6 +384,18 @@ export const api = {
         }>("/api/auth/login", {
           method: "POST",
           body: JSON.stringify({ email, password }),
+        });
+      },
+      forgotPassword: async (email: string) => {
+        return request<{ message: string }>("/api/auth/forgot-password", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+      },
+      resetPassword: async (token: string, password: string) => {
+        return request<{ message: string }>("/api/auth/reset-password", {
+          method: "POST",
+          body: JSON.stringify({ token, password }),
         });
       },
     me: () =>

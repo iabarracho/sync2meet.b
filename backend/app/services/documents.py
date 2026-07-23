@@ -4,8 +4,16 @@ import re
 from pathlib import Path
 
 from docx import Document
+from docx.text.paragraph import Paragraph
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+
+
+_INLINE_MARKDOWN = re.compile(
+    r"(\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_)"
+)
+_BULLET_RE = re.compile(r"^(?:[-*•–—]\s+)(.+)$")
+_NUMBERED_RE = re.compile(r"^(\d+)[.)]\s+(.+)$")
 
 
 def _parse_table_cells(line: str) -> list[str]:
@@ -34,7 +42,34 @@ def _add_markdown_table(doc: Document, table_lines: list[str]) -> None:
     for row_idx, row in enumerate(rows):
         for col_idx in range(col_count):
             value = row[col_idx] if col_idx < len(row) else ""
-            table.rows[row_idx].cells[col_idx].text = value
+            cell = table.rows[row_idx].cells[col_idx]
+            cell.text = ""
+            paragraph = cell.paragraphs[0]
+            _add_inline_runs(paragraph, value)
+
+
+def _add_inline_runs(paragraph: Paragraph, text: str) -> None:
+    for run in list(paragraph.runs):
+        run._element.getparent().remove(run._element)
+
+    pos = 0
+    for match in _INLINE_MARKDOWN.finditer(text):
+        if match.start() > pos:
+            paragraph.add_run(text[pos : match.start()])
+        if match.group(2) is not None:
+            run = paragraph.add_run(match.group(2))
+            run.bold = True
+        elif match.group(3) is not None:
+            run = paragraph.add_run(match.group(3))
+            run.italic = True
+        else:
+            run = paragraph.add_run(match.group(4))
+            run.italic = True
+        pos = match.end()
+    if pos < len(text):
+        paragraph.add_run(text[pos:])
+    if not text:
+        paragraph.add_run("")
 
 
 def export_docx(content: str, output_path: Path) -> Path:
@@ -49,29 +84,44 @@ def export_docx(content: str, output_path: Path) -> Path:
             index += 1
             continue
         if line.startswith("### "):
-            doc.add_heading(line[4:], level=3)
+            doc.add_heading(line[4:].strip(), level=3)
             index += 1
             continue
         if line.startswith("## "):
-            doc.add_heading(line[3:], level=2)
+            doc.add_heading(line[3:].strip(), level=2)
             index += 1
             continue
         if line.startswith("# "):
-            doc.add_heading(line[2:], level=1)
+            doc.add_heading(line[2:].strip(), level=1)
             index += 1
             continue
         if line.startswith("|") and line.endswith("|"):
             table_lines: list[str] = []
             while index < len(lines):
                 candidate = lines[index].strip()
-                if not candidate.startswith("|"):
+                if not (candidate.startswith("|") and candidate.endswith("|")):
                     break
                 table_lines.append(candidate)
                 index += 1
             _add_markdown_table(doc, table_lines)
             continue
 
-        doc.add_paragraph(re.sub(r"\*\*(.+?)\*\*", r"\1", line))
+        bullet = _BULLET_RE.match(line)
+        if bullet:
+            para = doc.add_paragraph(style="List Bullet")
+            _add_inline_runs(para, bullet.group(1))
+            index += 1
+            continue
+
+        numbered = _NUMBERED_RE.match(line)
+        if numbered:
+            para = doc.add_paragraph(style="List Number")
+            _add_inline_runs(para, numbered.group(2))
+            index += 1
+            continue
+
+        para = doc.add_paragraph()
+        _add_inline_runs(para, line)
         index += 1
 
     doc.save(str(output_path))
@@ -86,7 +136,8 @@ def export_pdf(content: str, output_path: Path) -> Path:
     c.setFont("Helvetica", 10)
     for raw in content.splitlines():
         line = raw.strip() or " "
-        # Simple wrap
+        line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
+        line = re.sub(r"(?<!\*)\*(.+?)\*(?!\*)", r"\1", line)
         chunks = _wrap(line, 90)
         for chunk in chunks:
             if y < 40:
@@ -126,8 +177,11 @@ def render_agenda_variables(
 ) -> str:
     content = template.replace("[NOME CLIENTE]", client_name)
     content = content.replace("[DATA]", meeting_date)
-    if suggestions and "• XX" in content:
-        content = content.replace("• XX", suggestions, 1)
+    if suggestions:
+        for marker in ("- XX", "• XX"):
+            if marker in content:
+                content = content.replace(marker, suggestions, 1)
+                break
     return content
 
 

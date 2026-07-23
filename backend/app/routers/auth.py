@@ -21,8 +21,11 @@ from ..models import User
 from ..schemas import (
     AuthConfigOut,
     AuthSessionOut,
+    ForgotPasswordRequest,
     LoginRequest,
+    MessageOut,
     RegisterRequest,
+    ResetPasswordRequest,
     UserOut,
 )
 
@@ -43,6 +46,7 @@ from ..services.auth import (
 from ..services import audit as audit_service
 
 from ..services import rate_limit as rate_limit_service
+from ..services import password_reset as password_reset_service
 
 
 
@@ -71,6 +75,8 @@ def _registration_open(db: Session) -> bool:
 
         return False
 
+    if settings.max_team_users <= 0:
+        return True
     return _users_count(db) < settings.max_team_users
 
 
@@ -94,6 +100,8 @@ def auth_config(db: Session = Depends(get_db)) -> AuthConfigOut:
         users_count=None,
 
         allowed_email_domains=settings.allowed_email_domains_list,
+
+        password_reset_enabled=settings.email_enabled,
 
     )
 
@@ -169,7 +177,6 @@ def register(
 
 
 
-    count = _users_count(db)
     role = "member"
 
 
@@ -325,6 +332,78 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)) -
     token = create_access_token(user.id, user.token_version)
 
     return _token_response(user, token)
+
+
+
+
+
+@router.post("/forgot-password", response_model=MessageOut)
+def forgot_password(
+    body: ForgotPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> MessageOut:
+    rate_limit_service.check_rate_limit(request, bucket="password_reset")
+    if not settings.auth_enabled:
+        raise HTTPException(400, "Autenticação desativada neste servidor.")
+    if not settings.email_enabled:
+        raise HTTPException(
+            503,
+            "Recuperação por email não está configurada. Contacta o administrador.",
+        )
+
+    sent, error = password_reset_service.request_password_reset(
+        db, body.email.lower().strip()
+    )
+    if not sent:
+        raise HTTPException(503, error or "Não foi possível enviar o email.")
+
+    audit_service.log_audit(
+        db,
+        action="auth.password_reset_requested",
+        user_email=body.email.lower().strip(),
+    )
+    return MessageOut(
+        message=(
+            "Se existir uma conta com esse email, receberás instruções "
+            "para redefinir a password."
+        )
+    )
+
+
+
+
+
+@router.post("/reset-password", response_model=MessageOut)
+def reset_password(
+    body: ResetPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> MessageOut:
+    rate_limit_service.check_rate_limit(request, bucket="password_reset")
+    if not settings.auth_enabled:
+        raise HTTPException(400, "Autenticação desativada neste servidor.")
+    if len(body.password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            400,
+            f"A password deve ter pelo menos {MIN_PASSWORD_LENGTH} caracteres.",
+        )
+    if len(body.password) > MAX_PASSWORD_LENGTH:
+        raise HTTPException(400, "Password demasiado longa.")
+
+    user = password_reset_service.reset_password_with_token(
+        db, body.token, body.password
+    )
+    if not user:
+        raise HTTPException(400, "Link inválido ou expirado. Pede um novo reset.")
+
+    audit_service.log_audit(
+        db,
+        action="auth.password_reset_completed",
+        user_id=user.id,
+        user_email=user.email,
+    )
+    return MessageOut(message="Password atualizada. Já podes iniciar sessão.")
 
 
 

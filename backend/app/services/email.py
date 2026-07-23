@@ -68,6 +68,24 @@ def send_meeting_email(
         return "failed", friendly_smtp_error(str(exc))
 
 
+def send_password_reset_email(
+    to_email: str,
+    user_name: str,
+    reset_link: str,
+    expires_hours: int,
+) -> tuple[str, str | None]:
+    require_email()
+    subject = f"{settings.app_display_name} — redefinir password"
+    body = (
+        f"Olá {user_name},\n\n"
+        "Recebemos um pedido para redefinir a password da tua conta.\n\n"
+        f"Abre este link (válido {expires_hours} hora(s)):\n{reset_link}\n\n"
+        "Se não pediste esta alteração, ignora este email.\n\n"
+        f"— {settings.app_display_name}"
+    )
+    return send_meeting_email(to_email, subject, body)
+
+
 def build_distribution_body(
     meeting_title: str,
     meeting_date: str,

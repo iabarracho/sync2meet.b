@@ -1,41 +1,41 @@
 from ..models import TemplateSource, TemplateType
 
-AGENDA_TEMPLATE = """AGENDA REUNIÃO [NOME CLIENTE]
+AGENDA_TEMPLATE = """# Agenda reunião [NOME CLIENTE]
 
-DATA: [DATA]
+**Data:** [DATA]
 
-Pontos do lado da Empresa
+## Pontos do lado da Empresa
 
-(O que ficou combinado na última reunião e o estado atual de cada ponto)
+*(O que ficou combinado na última reunião e o estado atual de cada ponto)*
 
-• XX — [FEITO / EM CURSO / PENDENTE / A ENVIAR HOJE]
+- XX — [FEITO / EM CURSO / PENDENTE / A ENVIAR HOJE]
 
-Pontos do lado do Cliente
+## Pontos do lado do Cliente
 
-(O que dependemos do cliente para avançar ou validar)
+*(O que dependemos do cliente para avançar ou validar)*
 
-• XX
+- XX
 
-Temas novos a abordar em reunião
+## Temas novos a abordar em reunião
 
-(Assuntos adicionais ou novas propostas a discutir)
+*(Assuntos adicionais ou novas propostas a discutir)*
 
-• XX
+- XX
 """
 
-MINUTES_TEMPLATE = """[NOME CLIENTE] MEETING
+MINUTES_TEMPLATE = """# Ata — [NOME CLIENTE]
 
-Date: [DATA]
+**Data:** [DATA]
 
-Participants: [PARTICIPANTES]
+**Participantes:** [PARTICIPANTES]
 
-Notas da Reunião:
+## Notas da reunião
 
-TEMA
+### TEMA
 
-• Conteúdo
+- Conteúdo
 
-Action Items
+## Action items
 
 | Task | Pessoa Alocada | Timing |
 | :--- | :------------- | :----- |

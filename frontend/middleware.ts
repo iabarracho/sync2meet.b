@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/login", "/register"];
+const PUBLIC_PREFIXES = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export async function middleware(request: NextRequest) {
   if (process.env.NEXT_PUBLIC_AUTH_ENABLED === "false") {

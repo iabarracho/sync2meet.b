@@ -20,6 +20,7 @@ export default function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
   const [emailDomains, setEmailDomains] = useState<string[]>([]);
 
   useEffect(() => {
@@ -28,8 +29,14 @@ export default function RegisterForm() {
       .then((cfg) => {
         setAllowed(cfg.allow_registration);
         setEmailDomains(cfg.allowed_email_domains ?? []);
+        setConfigError(null);
       })
-      .catch(() => setAllowed(false));
+      .catch(() => {
+        setAllowed(false);
+        setConfigError(
+          "Não foi possível contactar a API. Verifica se o backend Sync2meet está a correr (ARRANCAR.cmd)."
+        );
+      });
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -75,8 +82,8 @@ export default function RegisterForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-slate-600">
-              O limite de contas foi atingido ou o registo está desativado.
-              Pede a um administrador para te ajudar.
+              {configError ??
+                "O limite de contas foi atingido ou o registo está desativado. Pede a um administrador para te ajudar."}
             </p>
             <Button asChild variant="outline" className="w-full">
               <Link href="/login">Voltar ao login</Link>

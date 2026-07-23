@@ -18,9 +18,20 @@ from app.config import get_settings  # noqa: E402
 
 get_settings.cache_clear()
 
-from app.database import Base, engine  # noqa: E402
+from app import models  # noqa: E402, F401
+from app.database import Base, SessionLocal, engine  # noqa: E402
 
 Base.metadata.create_all(bind=engine)
+
+
+@pytest.fixture
+def db():
+    session = SessionLocal()
+    try:
+        yield session
+        session.rollback()
+    finally:
+        session.close()
 
 
 @pytest.fixture(autouse=True)

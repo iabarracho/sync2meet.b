@@ -14,13 +14,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const pathname = usePathname();
 
-  const isLogin =
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
 
-    pathname.startsWith("/login") || pathname.startsWith("/register");
-
-
-
-  if (isLogin) {
+  if (isAuthPage) {
 
     return <>{children}</>;
 
