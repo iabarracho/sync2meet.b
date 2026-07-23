@@ -56,6 +56,7 @@ export function Sidebar() {
           width={36}
           height={36}
           className="rounded-lg"
+          unoptimized
         />
         <div className="min-w-0">
           <p className="truncate font-semibold tracking-tight">{APP_NAME}</p>

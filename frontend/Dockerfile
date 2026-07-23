@@ -19,7 +19,7 @@ ENV INTERNAL_API_URL=http://api:8000
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.ts ./
-RUN mkdir -p public
+COPY --from=builder /app/public ./public
 
 RUN npm ci --omit=dev
 

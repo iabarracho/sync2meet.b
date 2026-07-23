@@ -25,6 +25,7 @@ export function AuthShell({
             height={72}
             className="mb-4 rounded-2xl shadow-sm"
             priority
+            unoptimized
           />
           <p className="text-lg font-semibold tracking-tight text-neutral-900">
             {APP_NAME}
