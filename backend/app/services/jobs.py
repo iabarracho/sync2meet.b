@@ -409,27 +409,43 @@ def run_minutes_job(job_id: str) -> None:
         if isinstance(template.structure, dict):
             analysis_mode = template.structure.get("mode")
 
-        analysis = asyncio.run(
-            ai_service.analyze_transcript(transcript.text, mode=analysis_mode)
-        )
-        base = doc_service.render_minutes_variables(
-            template.content,
-            meeting.client_name,
-            meeting_date,
-            participants_str,
-        )
-        content = asyncio.run(
-            ai_service.fill_template(
-                base,
-                {
-                    "NOME CLIENTE": meeting.client_name,
-                    "DATA": meeting_date,
-                    "PARTICIPANTES": participants_str,
-                },
-                analysis,
-                mode=analysis_mode,
+        if (analysis_mode or "").strip().lower() == "full_transcript":
+            # Sem análise AI: devolve a transcrição integral (nada é omitido).
+            content = doc_service.build_full_transcript_document(
+                client_name=meeting.client_name,
+                meeting_date=meeting_date,
+                participants=participants_str,
+                transcript_text=transcript.text or "",
             )
-        )
+            analysis = {
+                "analysis_mode": "full_transcript",
+                "action_items": [],
+                "meeting_objective": "",
+                "key_discussion_topics": [],
+                "decisions": [],
+            }
+        else:
+            analysis = asyncio.run(
+                ai_service.analyze_transcript(transcript.text, mode=analysis_mode)
+            )
+            base = doc_service.render_minutes_variables(
+                template.content,
+                meeting.client_name,
+                meeting_date,
+                participants_str,
+            )
+            content = asyncio.run(
+                ai_service.fill_template(
+                    base,
+                    {
+                        "NOME CLIENTE": meeting.client_name,
+                        "DATA": meeting_date,
+                        "PARTICIPANTES": participants_str,
+                    },
+                    analysis,
+                    mode=analysis_mode,
+                )
+            )
 
         db.query(ActionItem).filter(ActionItem.meeting_id == job.meeting_id).delete()
 

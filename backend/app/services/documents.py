@@ -197,6 +197,26 @@ def render_minutes_variables(
     return content
 
 
+def build_full_transcript_document(
+    *,
+    client_name: str,
+    meeting_date: str,
+    participants: str,
+    transcript_text: str,
+) -> str:
+    """Documento com a transcrição integral — sem resumir nem filtrar."""
+    body = (transcript_text or "").strip() or "(Transcrição vazia.)"
+    date = meeting_date or "—"
+    people = participants or "—"
+    return (
+        f"# Transcrição completa — {client_name}\n\n"
+        f"**Data:** {date}\n\n"
+        f"**Participantes:** {people}\n\n"
+        f"## Transcrição\n\n"
+        f"{body}\n"
+    )
+
+
 def short_summary_from_content(content: str, max_len: int = 280) -> str:
     plain = re.sub(r"[#*|_\[\]]", "", content)
     plain = " ".join(plain.split())

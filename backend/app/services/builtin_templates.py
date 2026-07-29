@@ -89,6 +89,17 @@ FULL_SUMMARY_TEMPLATE = """# Resumo completo — [NOME CLIENTE]
 - [PRÓXIMO PASSO]
 """
 
+FULL_TRANSCRIPT_TEMPLATE = """# Transcrição completa — [NOME CLIENTE]
+
+**Data:** [DATA]
+
+**Participantes:** [PARTICIPANTES]
+
+## Transcrição
+
+[TRANSCRICAO_COMPLETA]
+"""
+
 BUILTIN_TEMPLATES = [
     {
         "name": "Agenda de Reunião",
@@ -127,6 +138,18 @@ BUILTIN_TEMPLATES = [
             ],
             "placeholders": ["NOME CLIENTE", "DATA", "PARTICIPANTES"],
             "tables": ["action_items"],
+        },
+    },
+    {
+        "name": "Transcrição completa",
+        "type": TemplateType.minutes,
+        "source": TemplateSource.builtin,
+        "content": FULL_TRANSCRIPT_TEMPLATE,
+        "is_default": False,
+        "structure": {
+            "mode": "full_transcript",
+            "sections": ["header", "full_transcript"],
+            "placeholders": ["NOME CLIENTE", "DATA", "PARTICIPANTES"],
         },
     },
     {
