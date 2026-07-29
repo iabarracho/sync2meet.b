@@ -111,7 +111,7 @@ BUILTIN_TEMPLATES = [
         "type": TemplateType.minutes,
         "source": TemplateSource.builtin,
         "content": FULL_SUMMARY_TEMPLATE,
-        "is_default": True,
+        "is_default": False,
         "structure": {
             "mode": "full_summary",
             "sections": [
@@ -134,7 +134,7 @@ BUILTIN_TEMPLATES = [
         "type": TemplateType.minutes,
         "source": TemplateSource.builtin,
         "content": MINUTES_TEMPLATE,
-        "is_default": False,
+        "is_default": True,
         "structure": {
             "mode": "strict_minutes",
             "sections": ["header", "participants", "notes", "action_items_table"],
