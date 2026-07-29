@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from .models import Template, User, Meeting
+from .models import Template, User, Meeting, TemplateType
 from .services.builtin_templates import BUILTIN_TEMPLATES
 from .services.template_cleanup import cleanup_duplicate_templates
 from .config import settings
@@ -93,6 +93,28 @@ def seed_database(db: Session) -> None:
                     is_default=spec["is_default"],
                 )
             )
+    # Garantir um único default por tipo (preferir builtins marcados)
+    for ttype in (TemplateType.agenda, TemplateType.minutes):
+        preferred = next(
+            (
+                s
+                for s in BUILTIN_TEMPLATES
+                if s["type"] == ttype and s.get("is_default")
+            ),
+            None,
+        )
+        if not preferred:
+            continue
+        db.query(Template).filter(Template.type == ttype).update(
+            {Template.is_default: False}, synchronize_session=False
+        )
+        row = (
+            db.query(Template)
+            .filter(Template.name == preferred["name"], Template.type == ttype)
+            .first()
+        )
+        if row:
+            row.is_default = True
     promote_admin_emails(db)
     db.commit()
     cleanup_duplicate_templates(db)

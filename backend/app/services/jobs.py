@@ -405,7 +405,13 @@ def run_minutes_job(job_id: str) -> None:
             else ""
         )
 
-        analysis = asyncio.run(ai_service.analyze_transcript(transcript.text))
+        analysis_mode = None
+        if isinstance(template.structure, dict):
+            analysis_mode = template.structure.get("mode")
+
+        analysis = asyncio.run(
+            ai_service.analyze_transcript(transcript.text, mode=analysis_mode)
+        )
         base = doc_service.render_minutes_variables(
             template.content,
             meeting.client_name,
@@ -421,6 +427,7 @@ def run_minutes_job(job_id: str) -> None:
                     "PARTICIPANTES": participants_str,
                 },
                 analysis,
+                mode=analysis_mode,
             )
         )
 
